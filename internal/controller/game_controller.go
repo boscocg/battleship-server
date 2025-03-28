@@ -2,6 +2,7 @@ package controller
 
 import (
 	"battledak-server/internal/dto"
+	"battledak-server/internal/service"
 	"encoding/json"
 	"log"
 	"math/rand"
@@ -20,10 +21,15 @@ type GameController interface {
 }
 
 type gameControllerImpl struct {
+	gameService service.GameService
 }
 
-func NewGameController() *gameControllerImpl {
-	return &gameControllerImpl{}
+func NewGameController(
+	gameService service.GameService,
+) *gameControllerImpl {
+	return &gameControllerImpl{
+		gameService: gameService,
+	}
 }
 
 func (u *gameControllerImpl) GetGame(ctx *gin.Context) {
@@ -33,7 +39,7 @@ func (u *gameControllerImpl) GetGame(ctx *gin.Context) {
 		return
 	}
 
-	game := &dto.Game{
+	game := &dto.PublicGameResponse{
 		ID: id,
 	}
 
@@ -62,16 +68,27 @@ func (u *gameControllerImpl) GetGame(ctx *gin.Context) {
 func (u *gameControllerImpl) StartGame(ctx *gin.Context) {
 	var input dto.GameRequest
 	if err := ctx.ShouldBindJSON(&input); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid grid format"})
+		return
+	}
+
+	houseGrid, decryptedHouseGrid := u.gameService.GenerateHouseGrid()
+
+	if len(input.UserGrid) != 100 || len(houseGrid) != 100 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "User grid must be 100 cells"})
 		return
 	}
 
 	timestamp := uint64(time.Now().UnixNano())
 	randomPart := uint64(rand.Intn(1000))
 	id := timestamp + randomPart
-	game := &dto.PublicGameResponse{
-		LastMove: "USER",
-		ID:       id,
+	game := &dto.Game{
+		LastMove:           "USER",
+		ID:                 id,
+		UserGrid:           input.UserGrid,
+		HouseGrid:          houseGrid,
+		UpdatedAt:          time.Now(),
+		DecryptedHouseGrid: decryptedHouseGrid,
 	}
 
 	// Check if the game exists in Redis
@@ -95,5 +112,13 @@ func (u *gameControllerImpl) StartGame(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, game)
+	publicGame := &dto.PublicGameResponse{
+		ID:        game.ID,
+		LastMove:  game.LastMove,
+		UserGrid:  game.UserGrid,
+		HouseGrid: game.HouseGrid,
+		UpdatedAt: game.UpdatedAt,
+	}
+
+	ctx.JSON(http.StatusOK, publicGame)
 }

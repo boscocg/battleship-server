@@ -2,8 +2,8 @@ package routes
 
 import (
 	"battledak-server/internal/controller"
-	"battledak-server/internal/controller/health"
 	"battledak-server/internal/middleware"
+	"battledak-server/internal/service"
 	"strings"
 	"time"
 
@@ -58,8 +58,9 @@ func SetupRouter() *gin.Engine {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	gameController := controller.NewGameController()
-	healthController := health.NewHealthController()
+	gameService := service.NewGameService()
+	gameController := controller.NewGameController(gameService)
+	healthController := controller.NewHealthController()
 
 	public := router.Group("/")
 	public.Use(middleware.PublicAccess())
