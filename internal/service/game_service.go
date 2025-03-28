@@ -1,11 +1,20 @@
 package service
 
 import (
+	"battledak-server/internal/dto"
+	"encoding/json"
+	"fmt"
 	"math/rand"
+	"strconv"
+
+	config "battledak-server/configs"
 )
 
 type GameService interface {
 	GenerateHouseGrid() ([]string, []int)
+	GetGameFromRedis(id uint64) (error, dto.Game)
+	SetGameToRedis(game dto.Game) error
+	MapperGameToPublicGame(game dto.Game) dto.PublicGame
 }
 
 type gameServiceImpl struct {
@@ -40,4 +49,55 @@ func (g *gameServiceImpl) GenerateHouseGrid() ([]string, []int) {
 	}
 
 	return houseGrid, publicGrid
+}
+
+func (g *gameServiceImpl) GetGameFromRedis(id uint64) (error, dto.Game) {
+	game := &dto.Game{
+		ID: id,
+	}
+
+	// Check if the game exists in Redis
+	err := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, strconv.FormatUint(game.ID, 10)).Err()
+	if err != nil {
+		return fmt.Errorf("Game not found: %v", err), dto.Game{}
+	}
+
+	// Retrieve the game data from Redis
+	val, err := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, strconv.FormatUint(game.ID, 10)).Bytes()
+	if err != nil {
+		return fmt.Errorf("Failed to retrieve game: %v", err), dto.Game{}
+	}
+
+	if err = json.Unmarshal(val, game); err != nil {
+		return fmt.Errorf("Failed to parse game data: %v", err), dto.Game{}
+	}
+
+	return nil, *game
+}
+
+func (g *gameServiceImpl) SetGameToRedis(game dto.Game) error {
+	gameJSON, err := json.Marshal(game)
+	if err != nil {
+		return fmt.Errorf("Failed to process game data: %v", err)
+	}
+
+	// Set the game in Redis with a 1-hour expiration time
+	err = config.AppConfig.RedisClient.Set(config.AppConfig.Ctx, strconv.FormatUint(game.ID, 10), gameJSON, 0).Err()
+	if err != nil {
+		return fmt.Errorf("Error setting game in Redis: %v", err)
+	}
+
+	return nil
+}
+
+func (g *gameServiceImpl) MapperGameToPublicGame(game dto.Game) dto.PublicGame {
+	publicGame := &dto.PublicGame{
+		ID:        game.ID,
+		LastMove:  game.LastMove,
+		UserGrid:  game.UserGrid,
+		HouseGrid: game.HouseGrid,
+		UpdatedAt: game.UpdatedAt,
+	}
+
+	return *publicGame
 }

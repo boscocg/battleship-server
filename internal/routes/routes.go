@@ -59,7 +59,9 @@ func SetupRouter() *gin.Engine {
 	}))
 
 	gameService := service.NewGameService()
+	moveService := service.NewMoveService()
 	gameController := controller.NewGameController(gameService)
+	moveController := controller.NewMoveController(moveService, gameService)
 	healthController := controller.NewHealthController()
 
 	public := router.Group("/")
@@ -75,6 +77,10 @@ func SetupRouter() *gin.Engine {
 		{
 			game.GET("/:id", gameController.GetGame)
 			game.POST("", gameController.StartGame)
+		}
+		move := protected.Group("/move")
+		{
+			move.POST("", moveController.Move)
 		}
 	}
 

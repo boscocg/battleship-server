@@ -17,7 +17,7 @@ type GameRequest struct {
 	UserGrid []string `json:"user_grid" binding:"required" validate:"required"`
 }
 
-type PublicGameResponse struct {
+type PublicGame struct {
 	ID        uint64    `json:"id" binding:"required" validate:"required"`
 	LastMove  string    `json:"last_move" binding:"required" validate:"required"`
 	UserGrid  []string  `json:"user_grid" binding:"required" validate:"required"`
