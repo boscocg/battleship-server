@@ -1,0 +1,14 @@
+networks:
+  backend:
+    name: battledak-server
+    driver: bridge
+
+services:
+  redis:
+    container_name: gateway-redis
+    image: redis
+    restart: always
+    ports:
+      - ${REDIS_PORT}:6379
+    networks:
+      - backend
