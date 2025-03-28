@@ -2,6 +2,8 @@ package routes
 
 import (
 	"battledak-server/internal/controller"
+	"battledak-server/internal/controller/health"
+	"battledak-server/internal/middleware"
 	"strings"
 	"time"
 
@@ -12,7 +14,26 @@ import (
 )
 
 func SetupRouter() *gin.Engine {
+	if config.GetEnv("ENV") != "dev" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	router := gin.Default()
+
+	trustedProxies := config.GetEnv("TRUSTED_PROXIES")
+	if trustedProxies != "" {
+		proxyList := strings.Split(trustedProxies, ",")
+		for i := range proxyList {
+			proxyList[i] = strings.TrimSpace(proxyList[i])
+		}
+		router.SetTrustedProxies(proxyList)
+	} else if config.GetEnv("ENV") == "dev" {
+		router.SetTrustedProxies([]string{"127.0.0.1", "::1"})
+	} else {
+		// In production, we don't set any trusted proxies
+		router.SetTrustedProxies([]string{})
+	}
+
 	router.Use(gin.Recovery())
 	router.Use(cors.New(cors.Config{
 		AllowOriginFunc: func(origin string) bool {
@@ -38,11 +59,22 @@ func SetupRouter() *gin.Engine {
 	}))
 
 	gameController := controller.NewGameController()
+	healthController := health.NewHealthController()
 
-	game := router.Group("/game")
+	public := router.Group("/")
+	public.Use(middleware.PublicAccess())
 	{
-		game.GET("/:id", gameController.GetGame)
-		game.POST("", gameController.StartGame)
+		public.GET("/health", healthController.Check)
+	}
+
+	protected := router.Group("/")
+	protected.Use(middleware.AuthRequired())
+	{
+		game := protected.Group("/game")
+		{
+			game.GET("/:id", gameController.GetGame)
+			game.POST("", gameController.StartGame)
+		}
 	}
 
 	router.NoRoute(func(c *gin.Context) {
