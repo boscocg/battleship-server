@@ -45,6 +45,7 @@ function generate_env {
     local STAGE=$1
     echo -e "\nGenerating .env.${STAGE} file"
     gcloud secrets versions access latest --secret="${PROJECT}-${STAGE}" > .env.${STAGE} || exit 1
+    gcloud secrets versions access latest --secret="${PROJECT}-${STAGE}" > .env || exit 1
 }
 
 function diff_env {
