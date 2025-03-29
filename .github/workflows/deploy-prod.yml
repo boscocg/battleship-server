@@ -36,19 +36,6 @@ jobs:
             --substitutions=_ENV_FILE=.env,_TAG_NAME=${TAG_NAME},_PORT=8080 \
             --config=cloudbuild.yaml
 
-      - name: 'Configure VPC Connector'
-        run: |-
-          gcloud run services update ${{ secrets.SERVICE }} \
-            --region=${{ secrets.REGION }} \
-            --vpc-connector=vpc-connector-enc-compute \
-            --vpc-egress=private-ranges-only
-
-      - name: 'Configure Cloud SQL Connections'
-        run: |-
-          gcloud run services update ${{ secrets.SERVICE }} \
-            --region=${{ secrets.REGION }} \
-            --add-cloudsql-instances=${{ secrets.CLOUD_SQL_INSTANCE }}
-
       - id: deploy
         name: 'Deploy to Cloud Run'
         uses: 'google-github-actions/deploy-cloudrun@v2'
