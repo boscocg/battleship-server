@@ -4,10 +4,8 @@ WORKDIR /app
 
 COPY . .
 
-# ARG ENV_FILE
-ARG ENV=prod
-ENV ENV=${ENV}
-COPY ${ENV_FILE} .env
+# ARG ENV_FILE // test local
+# COPY ${ENV_FILE} .env
 COPY cloudbuild.yaml .
 
 COPY go.mod go.sum ./
@@ -29,8 +27,8 @@ WORKDIR /app
 
 COPY --from=builder /app/battledak-server .
 RUN chmod +x /app/battledak-server
-# ARG ENV_FILE
-COPY --from=builder /app/${ENV_FILE} ${ENV_FILE}
+# ARG ENV_FILE // test local
+COPY --from=builder /app/.env .env
 
 EXPOSE 8080
 
