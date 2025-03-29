@@ -13,7 +13,7 @@ docker-build-test-prod:
 	docker build --build-arg ENV_FILE=.env.prod -t battledak-server:prod .
 
 docker-run-test-prod:
-	docker run -p 8080:8080 --network battledak-server -e REDIS_ADDR=gateway-redis:6379 -e ENV=prod  battledak-server:prod
+	docker run -p 8080:8080 --network battledak-server -e REDIS_ADDR=gateway-redis:6379 -e ENV=prod battledak-server:prod
 
 ##
 # Docker commands
@@ -53,10 +53,10 @@ docker-logs:
 
 
 gcloud-build-dev: env-dev
-	gcloud builds submit --config=cloudbuild.yaml --substitutions=_ENV_FILE=.env.dev,_TAG_NAME=dev,_PORT=8080
+	gcloud builds submit --config=cloudbuild.yaml --substitutions=_ENV_FILE=.env.dev,_ENV=dev,_PORT=8080
 
 gcloud-build-prod: env-prod
-	gcloud builds submit --config=cloudbuild.yaml --substitutions=_ENV_FILE=.env.prod,_TAG_NAME=prod,_PORT=8080
+	gcloud builds submit --config=cloudbuild.yaml --substitutions=_ENV_FILE=.env.prod,_ENV=prod,_PORT=8080
 
 deploy-dev: gcloud-build-dev
 	gcloud config set run/region us-east1

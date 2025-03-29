@@ -28,12 +28,12 @@ jobs:
       - name: 'Trigger Cloud Build'
         env:
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
-          TAG_NAME: 'prod'
+          ENV: 'prod'
           SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT }}
         run: |-
           gcloud builds submit --project=${PROJECT_ID} \
             --impersonate-service-account=${SERVICE_ACCOUNT} \
-            --substitutions=_ENV_FILE=.env,_TAG_NAME=${TAG_NAME},_PORT=8080 \
+            --substitutions=_ENV_FILE=.env,_ENV=${ENV},_PORT=8080 \
             --config=cloudbuild.yaml
 
       - id: deploy
