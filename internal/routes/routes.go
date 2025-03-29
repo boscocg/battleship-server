@@ -37,7 +37,7 @@ func SetupRouter() *gin.Engine {
 	router.Use(gin.Recovery())
 	router.Use(cors.New(cors.Config{
 		AllowOriginFunc: func(origin string) bool {
-			if config.GetEnv("ENV") == "dev" {
+			if config.GetEnv("ENV") == "dev" || config.GetEnv("ENV") == "local" {
 				return true
 			}
 			if strings.HasSuffix(origin, "-gateway-dao.vercel.app") || strings.HasSuffix(origin, ".gateway.tech") {
