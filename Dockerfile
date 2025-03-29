@@ -5,9 +5,12 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-ARG ENV_FILE
 COPY . .
-COPY ${ENV_FILE} ./
+
+ARG ENV_FILE=.env
+COPY ${ENV_FILE} .
+COPY ${ENV_FILE} .env
+COPY cloudbuild.yaml .
 
 # Build the application
 RUN GOOS=linux GOARCH=amd64 go build -o battledak-server cmd/api/main.go
