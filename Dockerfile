@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . .
 
-ARG ENV_FILE
+# ARG ENV_FILE
 ARG ENV=prod
 ENV ENV=${ENV}
 COPY ${ENV_FILE} .env
@@ -29,7 +29,7 @@ WORKDIR /app
 
 COPY --from=builder /app/battledak-server .
 RUN chmod +x /app/battledak-server
-ARG ENV_FILE
+# ARG ENV_FILE
 COPY --from=builder /app/${ENV_FILE} ${ENV_FILE}
 
 EXPOSE 8080
