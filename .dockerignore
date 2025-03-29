@@ -1,0 +1,12 @@
+# Ignore git and cache folders
+.git
+.cache
+
+# Ignore CI config
+.github
+
+# Ignore markdown files
+*.md
+
+# Allow configuration files
+!.env*

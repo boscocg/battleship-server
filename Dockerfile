@@ -4,8 +4,8 @@ WORKDIR /app
 
 COPY . .
 
-# ARG ENV_FILE // test local
-COPY ${ENV_FILE} ./
+# Create a default empty .env file
+RUN echo "# Empty .env file created by Docker build" > .env
 COPY cloudbuild.yaml ./
 
 COPY go.mod go.sum ./
@@ -26,8 +26,9 @@ WORKDIR /app
 
 COPY --from=builder /app/battledak-server .
 RUN chmod +x /app/battledak-server
-# ARG ENV_FILE // test local
-COPY --from=builder /app/${ENV_FILE} ${ENV_FILE}
+ARG ENV_FILE=.env
+# Copy the .env file from builder (will use the empty one if no custom file was provided)
+COPY --from=builder /app/.env .env
 
 EXPOSE 8080
 
