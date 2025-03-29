@@ -7,6 +7,8 @@ steps:
         'ENV_FILE=$_ENV_FILE',
         '--build-arg',
         'PORT=$_PORT',
+        '--build-arg',
+        'ENV=$_TAG_NAME',
         '-t',
         'gcr.io/gateway-dashboard-front/battledak-server-$_TAG_NAME',
         '.',

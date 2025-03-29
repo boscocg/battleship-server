@@ -9,6 +9,12 @@ dev:
 build:
 	go build -o battledak-server cmd/api/main.go
 
+docker-build-test-prod:
+	docker build --build-arg ENV_FILE=.env.prod -t battledak-server:prod .
+
+docker-run-test-prod:
+	docker run -p 8080:8080 --network battledak-server -e REDIS_ADDR=gateway-redis:6379 -e ENV=prod  battledak-server:prod
+
 ##
 # Docker commands
 ##

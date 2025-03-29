@@ -10,11 +10,11 @@ import (
 
 func main() {
 	config.LoadEnv()
+	log.Printf("Environment: %s", config.GetEnv("ENV"))
+
 	ctx := context.Background()
 
 	config.InitializeConfig(ctx)
-
-	log.Printf("Environment: %s", config.GetEnv("ENV"))
 
 	router := routes.SetupRouter()
 
