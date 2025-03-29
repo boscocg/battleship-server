@@ -45,6 +45,21 @@ docker-status:
 docker-logs:
 	$(DOCKER_COMPOSE) logs -f
 
+
+gcloud-build-dev: env-dev
+	gcloud builds submit --config=cloudbuild.yaml --substitutions=_ENV_FILE=.env.dev,_TAG_NAME=dev,_PORT=8080
+
+gcloud-build-prod: env-prod
+	gcloud builds submit --config=cloudbuild.yaml --substitutions=_ENV_FILE=.env.prod,_TAG_NAME=prod,_PORT=8080
+
+deploy-dev: gcloud-build-dev
+	gcloud config set run/region us-east1
+	gcloud run deploy battledak-server-dev --image gcr.io/gateway-dashboard-front/battledak-server-dev --platform managed --allow-unauthenticated
+
+deploy-prod: gcloud-build-prod
+	gcloud config set run/region us-east1
+	gcloud run deploy battledak-server-prod --image gcr.io/gateway-dashboard-front/battledak-server-prod --platform managed --allow-unauthenticated
+
 ## ENV MANAGE
 env-local:
 	./scripts/env.sh local
