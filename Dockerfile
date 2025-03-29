@@ -5,15 +5,14 @@ WORKDIR /app
 COPY . .
 
 # ARG ENV_FILE // test local
-COPY .env .env
-COPY cloudbuild.yaml .
+COPY ${ENV_FILE} ./
+COPY cloudbuild.yaml ./
 
 COPY go.mod go.sum ./
 RUN go mod download
 
-
 # Build the application
-RUN GOOS=linux GOARCH=amd64 go build -o battledak-server cmd/api/main.go
+RUN GOOS=linux GOARCH=amd64 go build -o battledak-server cmd/main.go
 
 FROM ubuntu:22.04
 
@@ -28,7 +27,7 @@ WORKDIR /app
 COPY --from=builder /app/battledak-server .
 RUN chmod +x /app/battledak-server
 # ARG ENV_FILE // test local
-COPY --from=builder /app/.env .env
+COPY --from=builder /app/${ENV_FILE} ${ENV_FILE}
 
 EXPOSE 8080
 

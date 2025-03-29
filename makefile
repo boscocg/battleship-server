@@ -4,10 +4,10 @@
 .PHONY: run build test clean proto
 
 dev:
-	gow -c run cmd/api/main.go
+	gow -c run cmd/main.go
 
 build:
-	go build -o battledak-server cmd/api/main.go
+	go build -o battledak-server cmd/main.go
 
 docker-build-test-prod:
 	docker build --build-arg ENV_FILE=.env.prod -t battledak-server:prod .
