@@ -1,0 +1,19 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '--build-arg',
+        'ENV_FILE=$_ENV_FILE',
+        '--build-arg',
+        'PORT=$_PORT',
+        '-t',
+        'gcr.io/gateway-dashboard-front/battledak-server-$_TAG_NAME',
+        '.',
+      ]
+images:
+  - 'gcr.io/gateway-dashboard-front/battledak-server-$_TAG_NAME'
+substitutions:
+  _ENV_FILE: '.env'
+  _TAG_NAME: 'prod'
+  _PORT: '8080'
