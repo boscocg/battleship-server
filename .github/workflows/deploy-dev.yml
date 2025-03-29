@@ -33,7 +33,7 @@ jobs:
         run: |-
           gcloud builds submit --project=${PROJECT_ID} \
             --impersonate-service-account=${SERVICE_ACCOUNT} \
-            --substitutions=ENV_FILE=.env,ENV=${ENV},PORT=8080 \
+            --substitutions=_ENV_FILE=.env,_ENV=${ENV},_PORT=8080 \
             --config=cloudbuild.yaml
 
       - id: deploy

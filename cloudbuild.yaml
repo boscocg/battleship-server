@@ -4,18 +4,18 @@ steps:
       [
         'build',
         '--build-arg',
-        'ENV_FILE=$ENV_FILE',
+        'ENV_FILE=$_ENV_FILE',
         '--build-arg',
-        'PORT=$PORT',
+        'PORT=$_PORT',
         '--build-arg',
-        'ENV=$ENV',
+        'ENV=$_ENV',
         '-t',
-        'gcr.io/gateway-dashboard-front/battledak-server-$ENV',
+        'gcr.io/gateway-dashboard-front/battledak-server-$_ENV',
         '.',
       ]
 images:
-  - 'gcr.io/gateway-dashboard-front/battledak-server-$ENV'
+  - 'gcr.io/gateway-dashboard-front/battledak-server-$_ENV'
 substitutions:
-  ENV_FILE: '.env'
-  ENV: 'prod'
-  PORT: '8080'
+  _ENV_FILE: '.env'
+  _ENV: 'prod'
+  _PORT: '8080'
