@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 
 ARG ENV_FILE
-ARG ENV
+ARG ENV=prod
 ENV ENV=${ENV}
 COPY ${ENV_FILE} .env
 COPY cloudbuild.yaml .
