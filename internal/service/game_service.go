@@ -11,7 +11,7 @@ import (
 )
 
 type GameService interface {
-	GenerateHouseGrid() ([]string, []int)
+	GenerateHouseGrid() ([]dto.CellType, []int)
 	GetGameFromRedis(id uint64) (error, dto.Game)
 	SetGameToRedis(game dto.Game) error
 	MapperGameToPublicGame(game dto.Game) dto.PublicGame
@@ -24,9 +24,9 @@ func NewGameService() *gameServiceImpl {
 	return &gameServiceImpl{}
 }
 
-func (g *gameServiceImpl) GenerateHouseGrid() ([]string, []int) {
+func (g *gameServiceImpl) GenerateHouseGrid() ([]dto.CellType, []int) {
 	// Seed the random number generator
-	digitToHash := map[int]string{
+	digitToHash := map[int]dto.CellType{
 		0: "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
 		1: "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
 		2: "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
@@ -39,16 +39,86 @@ func (g *gameServiceImpl) GenerateHouseGrid() ([]string, []int) {
 		9: "21049d1e9d599bf59ef8364908a6938e6ad9c587c2c2c3065b4ac29c558659ca",
 	}
 
-	houseGrid := make([]string, 100)
+	houseGrid := make([]dto.CellType, 100)
 	publicGrid := make([]int, 100)
 
-	for i := 0; i < 100; i++ {
-		randomDigit := rand.Intn(10)
+	// Initialize all cells to empty (water)
+	for i := range houseGrid {
+		randomDigit := rand.Intn(9) + 1
 		houseGrid[i] = digitToHash[randomDigit]
 		publicGrid[i] = randomDigit
 	}
 
+	// Place ships
+	placeShips(houseGrid, publicGrid, 4, 1, digitToHash)
+	placeShips(houseGrid, publicGrid, 3, 2, digitToHash)
+	placeShips(houseGrid, publicGrid, 2, 3, digitToHash)
+	placeShips(houseGrid, publicGrid, 1, 4, digitToHash)
+
 	return houseGrid, publicGrid
+}
+
+func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, digitToHash map[int]dto.CellType) {
+	for range count {
+		placed := false
+		for !placed {
+			// Randomly decide orientation: 0 for horizontal, 1 for vertical
+			orientation := rand.Intn(2)
+			var startPos int
+
+			if orientation == 0 { // Horizontal
+				// Ensure the ship doesn't go off the right edge
+				row := rand.Intn(10)
+				col := rand.Intn(10 - size + 1)
+				startPos = row*10 + col
+
+				// Check if positions are already occupied
+				canPlace := true
+				for j := range size {
+					pos := startPos + j
+					if publicGrid[pos] == 0 {
+						canPlace = false
+						break
+					}
+				}
+
+				if canPlace {
+					for j := range size {
+						pos := startPos + j
+						houseGrid[pos] = digitToHash[0] // Set to ship (represented by 0)
+						publicGrid[pos] = 0
+					}
+					println("Placed ship at", startPos, "size", size, "orientation", orientation)
+					placed = true
+				}
+			} else { // Vertical
+				// Ensure the ship doesn't go off the bottom edge
+				row := rand.Intn(10 - size + 1)
+				col := rand.Intn(10)
+				startPos = row*10 + col
+
+				// Check if positions are already occupied
+				canPlace := true
+				for j := range size {
+					pos := startPos + j*10
+					if publicGrid[pos] == 0 {
+						canPlace = false
+						break
+					}
+				}
+
+				if canPlace {
+					for j := range size {
+						pos := startPos + j*10
+						houseGrid[pos] = digitToHash[0] // Set to ship (represented by 0)
+						publicGrid[pos] = 0
+					}
+					println("Placed ship at", startPos, "size", size, "orientation", orientation)
+					placed = true
+				}
+			}
+		}
+	}
 }
 
 func (g *gameServiceImpl) GetGameFromRedis(id uint64) (error, dto.Game) {
@@ -97,6 +167,7 @@ func (g *gameServiceImpl) MapperGameToPublicGame(game dto.Game) dto.PublicGame {
 		UserGrid:  game.UserGrid,
 		HouseGrid: game.HouseGrid,
 		UpdatedAt: game.UpdatedAt,
+		Finished:  game.Finished,
 	}
 
 	return *publicGame

@@ -66,12 +66,13 @@ func (u *gameControllerImpl) StartGame(ctx *gin.Context) {
 	randomPart := uint64(rand.Intn(1000))
 	id := timestamp + randomPart
 	game := &dto.Game{
-		LastMove:           "USER",
+		LastMove:           "HOUSE",
 		ID:                 id,
 		UserGrid:           input.UserGrid,
 		HouseGrid:          houseGrid,
 		UpdatedAt:          time.Now(),
 		DecryptedHouseGrid: decryptedHouseGrid,
+		Finished:           false,
 	}
 
 	// Check if the game exists in Redis

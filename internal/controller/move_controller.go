@@ -15,17 +15,20 @@ type MoveController interface {
 }
 
 type moveControllerImpl struct {
-	moveService service.MoveService
-	gameService service.GameService
+	moveService   service.MoveService
+	gameService   service.GameService
+	cryptoService service.CryptoService
 }
 
 func NewMoveController(
 	moveService service.MoveService,
 	gameService service.GameService,
+	cryptoService service.CryptoService,
 ) *moveControllerImpl {
 	return &moveControllerImpl{
-		moveService: moveService,
-		gameService: gameService,
+		moveService:   moveService,
+		gameService:   gameService,
+		cryptoService: cryptoService,
 	}
 }
 
@@ -53,15 +56,24 @@ func (m *moveControllerImpl) Move(ctx *gin.Context) {
 	}
 
 	cell := -1
+	isHit := false
 
 	if input.Player == "USER" {
-		err, game = userMove(input, game)
+		err, game, cell, isHit = userMove(input, game)
+		hits := m.moveService.CountHits(game.HouseGrid)
+		if hits == 20 {
+			game.Finished = true
+		}
 	} else if input.Player == "HOUSE" {
-		err, game, cell = houseMove(m, game)
+		err, game, cell, isHit = houseMove(m, game)
+		hits := m.moveService.CountHits(game.UserGrid)
+		if hits == 20 {
+			game.Finished = true
+		}
 	}
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -75,14 +87,70 @@ func (m *moveControllerImpl) Move(ctx *gin.Context) {
 
 	move := &dto.Move{
 		PublicGame: publicGame,
-		Succeded:   true,
-	}
-
-	if cell != -1 {
-		move.Cell = cell
+		IsHit:      isHit,
+		Cell:       cell,
 	}
 
 	ctx.JSON(http.StatusOK, move)
+}
+
+func userMove(input dto.MoveRequest, game dto.Game) (error, dto.Game, int, bool) {
+	// Validate the input cell
+	if input.Player == "USER" && validateInputCell(input.Cell) == false {
+		return fmt.Errorf("Invalid cell"), game, -1, false
+	}
+
+	// Check if the cell is valid
+	if game.HouseGrid[input.Cell] == dto.Hit || game.HouseGrid[input.Cell] == dto.Miss {
+		return fmt.Errorf("This cell has already been chosen"), game, -1, false
+	}
+
+	// Check if the cell is a hit or miss
+	isHit := false
+	if game.DecryptedHouseGrid[input.Cell] == 0 {
+		isHit = true
+	}
+
+	// Update game state
+	game.LastMove = "USER"
+	game.UpdatedAt = time.Now()
+	if isHit {
+		game.HouseGrid[input.Cell] = dto.Hit
+	} else {
+		game.HouseGrid[input.Cell] = dto.Miss
+	}
+
+	return nil, game, input.Cell, isHit
+}
+
+func houseMove(m *moveControllerImpl, game dto.Game) (error, dto.Game, int, bool) {
+	// Generate a cell for the house move
+	err, cell := m.moveService.GenerateHouseMove(game.UserGrid)
+	if err != nil {
+		return err, game, -1, false
+	}
+
+	// Check if the cell is valid
+	if game.UserGrid[cell] == dto.Hit || game.UserGrid[cell] == dto.Miss {
+		return fmt.Errorf("This cell has already been chosen"), game, -1, false
+	}
+
+	// Check if the cell is a hit or miss
+	err, isHit := m.cryptoService.IsZero(game.UserGrid[cell])
+	if err != nil {
+		return err, game, -1, false
+	}
+
+	// Update game state
+	game.LastMove = "HOUSE"
+	game.UpdatedAt = time.Now()
+	if isHit {
+		game.UserGrid[cell] = dto.Hit
+	} else {
+		game.UserGrid[cell] = dto.Miss
+	}
+
+	return err, game, cell, isHit
 }
 
 func validateInputCell(cell int) bool {
@@ -90,31 +158,4 @@ func validateInputCell(cell int) bool {
 		return false
 	}
 	return true
-}
-
-func userMove(input dto.MoveRequest, game dto.Game) (error, dto.Game) {
-	// Update game state
-	game.LastMove = "USER"
-	game.UpdatedAt = time.Now()
-	game.HouseGrid[input.Cell] = "HIT"
-
-	if input.Player == "USER" && validateInputCell(input.Cell) == false {
-		return fmt.Errorf("Invalid cell"), game
-	}
-
-	return nil, game
-}
-
-func houseMove(m *moveControllerImpl, game dto.Game) (error, dto.Game, int) {
-	err, cell := m.moveService.GenerateHouseMove()
-	if err != nil {
-		return err, game, -1
-	}
-
-	// Update game state
-	game.LastMove = "HOUSE"
-	game.UpdatedAt = time.Now()
-	game.UserGrid[cell] = "HIT"
-
-	return err, game, cell
 }

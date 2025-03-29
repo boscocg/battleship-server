@@ -2,8 +2,8 @@ package dto
 
 type Move struct {
 	PublicGame
-	Cell     int  `json:"cell,omitempty"`
-	Succeded bool `json:"succeded" binding:"required" validate:"required"`
+	Cell  int  `json:"cell" binding:"required" validate:"required"`
+	IsHit bool `json:"is_hit" binding:"required" validate:"required"`
 }
 
 type MoveRequest struct {
@@ -11,3 +11,10 @@ type MoveRequest struct {
 	Player string `json:"player" binding:"required" validate:"required"`
 	Cell   int    `json:"cell,omitempty"`
 }
+
+type CellType string
+
+const (
+	Hit  CellType = "hit"
+	Miss CellType = "miss"
+)

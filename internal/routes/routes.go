@@ -58,10 +58,11 @@ func SetupRouter() *gin.Engine {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	cryptoService := service.NewCryptoService()
 	gameService := service.NewGameService()
 	moveService := service.NewMoveService()
 	gameController := controller.NewGameController(gameService)
-	moveController := controller.NewMoveController(moveService, gameService)
+	moveController := controller.NewMoveController(moveService, gameService, cryptoService)
 	healthController := controller.NewHealthController()
 
 	public := router.Group("/")

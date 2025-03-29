@@ -5,22 +5,24 @@ import (
 )
 
 type Game struct {
-	ID                 uint64    `json:"id" binding:"required" validate:"required"`
-	LastMove           string    `json:"last_move" binding:"required" validate:"required"`
-	UserGrid           []string  `json:"user_grid" binding:"required" validate:"required"`
-	HouseGrid          []string  `json:"house_grid" binding:"required" validate:"required"`
-	DecryptedHouseGrid []int     `json:"decrypted_house_grid" binding:"required" validate:"required"`
-	UpdatedAt          time.Time `json:"updated_at" binding:"required" validate:"required"`
+	ID                 uint64     `json:"id" binding:"required" validate:"required"`
+	LastMove           string     `json:"last_move" binding:"required" validate:"required"`
+	UserGrid           []CellType `json:"user_grid" binding:"required" validate:"required"`
+	HouseGrid          []CellType `json:"house_grid" binding:"required" validate:"required"`
+	DecryptedHouseGrid []int      `json:"decrypted_house_grid" binding:"required" validate:"required"`
+	UpdatedAt          time.Time  `json:"updated_at" binding:"required" validate:"required"`
+	Finished           bool       `json:"finished" binding:"required" validate:"required"`
 }
 
 type GameRequest struct {
-	UserGrid []string `json:"user_grid" binding:"required" validate:"required"`
+	UserGrid []CellType `json:"user_grid" binding:"required" validate:"required"`
 }
 
 type PublicGame struct {
-	ID        uint64    `json:"id" binding:"required" validate:"required"`
-	LastMove  string    `json:"last_move" binding:"required" validate:"required"`
-	UserGrid  []string  `json:"user_grid" binding:"required" validate:"required"`
-	HouseGrid []string  `json:"house_grid" binding:"required" validate:"required"`
-	UpdatedAt time.Time `json:"updated_at" binding:"required" validate:"required"`
+	ID        uint64     `json:"id" binding:"required" validate:"required"`
+	LastMove  string     `json:"last_move" binding:"required" validate:"required"`
+	UserGrid  []CellType `json:"user_grid" binding:"required" validate:"required"`
+	HouseGrid []CellType `json:"house_grid" binding:"required" validate:"required"`
+	UpdatedAt time.Time  `json:"updated_at" binding:"required" validate:"required"`
+	Finished  bool       `json:"finished" binding:"required" validate:"required"`
 }
