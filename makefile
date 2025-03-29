@@ -53,10 +53,10 @@ docker-logs:
 
 
 gcloud-build-dev: env-dev
-	gcloud builds submit --config=cloudbuild.yaml --substitutions=_ENV_FILE=.env.dev,_ENV=dev,_PORT=8080
+	gcloud builds submit --config=cloudbuild.yaml --substitutions=ENV_FILE=.env.dev,ENV=dev,PORT=8080
 
 gcloud-build-prod: env-prod
-	gcloud builds submit --config=cloudbuild.yaml --substitutions=_ENV_FILE=.env.prod,_ENV=prod,_PORT=8080
+	gcloud builds submit --config=cloudbuild.yaml --substitutions=ENV_FILE=.env.prod,ENV=prod,PORT=8080
 
 deploy-dev: gcloud-build-dev
 	gcloud config set run/region us-east1
