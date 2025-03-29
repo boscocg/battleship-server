@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 
 # ARG ENV_FILE // test local
-# COPY ${ENV_FILE} .env
+COPY .env .env
 COPY cloudbuild.yaml .
 
 COPY go.mod go.sum ./
