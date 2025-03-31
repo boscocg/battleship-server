@@ -72,7 +72,6 @@ func (u *gameControllerImpl) StartGame(ctx *gin.Context) {
 		HouseGrid:          houseGrid,
 		UpdatedAt:          time.Now(),
 		DecryptedHouseGrid: decryptedHouseGrid,
-		Finished:           false,
 	}
 
 	// Check if the game exists in Redis
