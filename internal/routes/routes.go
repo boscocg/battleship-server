@@ -52,7 +52,7 @@ func SetupRouter() *gin.Engine {
 			return false
 		},
 		AllowMethods:     []string{"GET", "OPTIONS", "PATCH", "PUT", "DELETE", "POST"},
-		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization", "x-api-key"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
