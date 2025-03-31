@@ -7,7 +7,7 @@ type Move struct {
 }
 
 type MoveRequest struct {
-	ID     uint64 `json:"id" binding:"required" validate:"required"`
+	ID     string `json:"id" binding:"required" validate:"required"`
 	Player string `json:"player" binding:"required" validate:"required"`
 	Cell   int    `json:"cell,omitempty"`
 }

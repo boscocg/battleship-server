@@ -5,7 +5,7 @@ import (
 )
 
 type Game struct {
-	ID                 uint64     `json:"id" binding:"required" validate:"required"`
+	ID                 string     `json:"id" binding:"required" validate:"required"`
 	LastMove           string     `json:"last_move" binding:"required" validate:"required"`
 	UserGrid           []CellType `json:"user_grid" binding:"required" validate:"required"`
 	HouseGrid          []CellType `json:"house_grid" binding:"required" validate:"required"`
@@ -19,7 +19,7 @@ type GameRequest struct {
 }
 
 type PublicGame struct {
-	ID        uint64     `json:"id" binding:"required" validate:"required"`
+	ID        string     `json:"id" binding:"required" validate:"required"`
 	LastMove  string     `json:"last_move" binding:"required" validate:"required"`
 	UserGrid  []CellType `json:"user_grid" binding:"required" validate:"required"`
 	HouseGrid []CellType `json:"house_grid" binding:"required" validate:"required"`
