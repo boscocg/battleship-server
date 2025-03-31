@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"strconv"
 
 	config "battledak-server/configs"
 )
 
 type GameService interface {
 	GenerateHouseGrid() ([]dto.CellType, []int)
-	GetGameFromRedis(id uint64) (error, dto.Game)
+	GetGameFromRedis(id string) (error, dto.Game)
 	SetGameToRedis(game dto.Game) error
 	MapperGameToPublicGame(game dto.Game) dto.PublicGame
 }
@@ -121,19 +120,19 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 	}
 }
 
-func (g *gameServiceImpl) GetGameFromRedis(id uint64) (error, dto.Game) {
+func (g *gameServiceImpl) GetGameFromRedis(id string) (error, dto.Game) {
 	game := &dto.Game{
 		ID: id,
 	}
 
 	// Check if the game exists in Redis
-	err := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, strconv.FormatUint(game.ID, 10)).Err()
+	err := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, game.ID).Err()
 	if err != nil {
 		return fmt.Errorf("Game not found: %v", err), dto.Game{}
 	}
 
 	// Retrieve the game data from Redis
-	val, err := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, strconv.FormatUint(game.ID, 10)).Bytes()
+	val, err := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, game.ID).Bytes()
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve game: %v", err), dto.Game{}
 	}
@@ -152,7 +151,7 @@ func (g *gameServiceImpl) SetGameToRedis(game dto.Game) error {
 	}
 
 	// Set the game in Redis with a 1-hour expiration time
-	err = config.AppConfig.RedisClient.Set(config.AppConfig.Ctx, strconv.FormatUint(game.ID, 10), gameJSON, 0).Err()
+	err = config.AppConfig.RedisClient.Set(config.AppConfig.Ctx, game.ID, gameJSON, 0).Err()
 	if err != nil {
 		return fmt.Errorf("Error setting game in Redis: %v", err)
 	}

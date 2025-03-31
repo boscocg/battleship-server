@@ -31,9 +31,9 @@ func NewGameController(
 }
 
 func (u *gameControllerImpl) GetGame(ctx *gin.Context) {
-	id, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid game ID"})
+	id := ctx.Param("id")
+	if id == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Game ID is required"})
 		return
 	}
 
@@ -67,7 +67,7 @@ func (u *gameControllerImpl) StartGame(ctx *gin.Context) {
 	id := timestamp + randomPart
 	game := &dto.Game{
 		LastMove:           "HOUSE",
-		ID:                 id,
+		ID:                 strconv.FormatUint(id, 10),
 		UserGrid:           input.UserGrid,
 		HouseGrid:          houseGrid,
 		UpdatedAt:          time.Now(),
@@ -76,7 +76,7 @@ func (u *gameControllerImpl) StartGame(ctx *gin.Context) {
 	}
 
 	// Check if the game exists in Redis
-	val, err := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, strconv.FormatUint(game.ID, 10)).Bytes()
+	val, err := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, game.ID).Bytes()
 	if val != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Game already exists"})
 		return
