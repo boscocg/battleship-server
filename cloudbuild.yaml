@@ -1,25 +1,10 @@
 steps:
-  # Create .env file from Secret Manager or use empty one
-  - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        if [ "$_ENV_FILE" != "" ]; then
-          # Try to get from Secret Manager if specified
-          gcloud secrets versions access latest --secret="gateway-dashboard-front-$_ENV" > .env 2>/dev/null || echo "# Empty .env file" > .env
-          echo "Created .env from Secret Manager or as empty file"
-        else
-          echo "# Empty .env file" > .env
-          echo "Created empty .env file"
-        fi
-        ls -la
-  
-  # Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args:
       [
         'build',
+        '--build-arg',
+        'ENV_FILE=$_ENV_FILE',
         '--build-arg',
         'PORT=$_PORT',
         '--build-arg',
