@@ -11,7 +11,7 @@ type Game struct {
 	HouseGrid          []CellType `json:"house_grid" binding:"required" validate:"required"`
 	DecryptedHouseGrid []int      `json:"decrypted_house_grid" binding:"required" validate:"required"`
 	UpdatedAt          time.Time  `json:"updated_at" binding:"required" validate:"required"`
-	Finished           bool       `json:"finished" binding:"required" validate:"required"`
+	Winner             string     `json:"winner"`
 }
 
 type GameRequest struct {
@@ -24,5 +24,5 @@ type PublicGame struct {
 	UserGrid  []CellType `json:"user_grid" binding:"required" validate:"required"`
 	HouseGrid []CellType `json:"house_grid" binding:"required" validate:"required"`
 	UpdatedAt time.Time  `json:"updated_at" binding:"required" validate:"required"`
-	Finished  bool       `json:"finished" binding:"required" validate:"required"`
+	Winner    string     `json:"winner"`
 }

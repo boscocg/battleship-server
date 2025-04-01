@@ -166,7 +166,7 @@ func (g *gameServiceImpl) MapperGameToPublicGame(game dto.Game) dto.PublicGame {
 		UserGrid:  game.UserGrid,
 		HouseGrid: game.HouseGrid,
 		UpdatedAt: game.UpdatedAt,
-		Finished:  game.Finished,
+		Winner:    game.Winner,
 	}
 
 	return *publicGame
