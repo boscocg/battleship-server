@@ -4,6 +4,7 @@
 .PHONY: run build test clean proto
 
 dev:
+	make env-local
 	gow -c run cmd/main.go
 
 build:
@@ -48,9 +49,11 @@ docker-logs:
 	$(DOCKER_COMPOSE) logs -f
 
 deploy-dev:
+	make env-dev
 	bash ./scripts/deploy.sh dev
 
 deploy-prod:
+	make env-prod
 	bash ./scripts/deploy.sh prod
 
 ## ENV MANAGE

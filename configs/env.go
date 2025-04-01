@@ -10,7 +10,7 @@ import (
 func GetEnvironment() string {
 	environment := os.Getenv("ENV")
 	if environment == "" {
-		environment = "local"
+		environment = "prod"
 	}
 	return environment
 }

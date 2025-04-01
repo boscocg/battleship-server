@@ -32,15 +32,20 @@ func NewRedisClient(ctx context.Context) *redis.Client {
 	config := RedisConfig{
 		Addr:     GetEnv("REDIS_ADDR"),
 		Password: GetEnv("REDIS_PASSWORD"),
-		DB:       0,
 	}
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr:             config.Addr,
-		Password:         config.Password,
-		DB:               config.DB,
-		DisableIndentity: true,
-	})
+	opt, _ := redis.ParseURL("rediss://default:" + config.Password + "@" + config.Addr)
+	rdb := redis.NewClient(opt)
+
+	env := GetEnv("ENV")
+	if env == "local" {
+		rdb = redis.NewClient(&redis.Options{
+			Addr:             config.Addr,
+			Password:         config.Password,
+			DB:               config.DB,
+			DisableIndentity: true,
+		})
+	}
 
 	_, err := rdb.Ping(ctx).Result()
 	if err != nil {
