@@ -25,6 +25,30 @@ jobs:
       - name: 'Save Secret to .env File'
         run: echo "${{ secrets.ENV_DEV }}" > .env
 
+      - name: 'Create .gcloudignore file'
+        run: |
+          cat > .gcloudignore << 'EOF'
+          .git
+          .gitignore
+          .idea/
+          .vscode/
+          *.swp
+          *.swo
+          bin/
+          build/
+          .cache/
+          tmp/
+          *_test.go
+          *.test
+          *.md
+          docs/
+          *.log
+          !.env
+          !.env.dev
+          !.env.prod
+          !.env.staging
+          EOF
+
       - name: 'Trigger Cloud Build'
         env:
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
