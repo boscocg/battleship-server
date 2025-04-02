@@ -116,3 +116,4 @@ docs/*
 
 user-key.json
 battledak-server
+.gcloudignore

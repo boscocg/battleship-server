@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . .
 
-# ARG ENV_FILE // test local
+ARG ENV_FILE=.env
 COPY ${ENV_FILE} ./
 COPY cloudbuild.yaml ./
 
@@ -26,7 +26,7 @@ WORKDIR /app
 
 COPY --from=builder /app/battledak-server .
 RUN chmod +x /app/battledak-server
-# ARG ENV_FILE // test local
+ARG ENV_FILE=.env
 COPY --from=builder /app/${ENV_FILE} ${ENV_FILE}
 
 EXPOSE 8080
