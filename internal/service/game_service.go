@@ -11,7 +11,7 @@ import (
 
 type GameService interface {
 	GenerateHouseGrid() ([]dto.CellType, []int)
-	GetGameFromRedis(id string) (error, dto.Game)
+	GetGameFromRedis(id string) (dto.Game, error)
 	SetGameToRedis(game dto.Game) error
 	MapperGameToPublicGame(game dto.Game) dto.PublicGame
 }
@@ -118,7 +118,7 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 	}
 }
 
-func (g *gameServiceImpl) GetGameFromRedis(id string) (error, dto.Game) {
+func (g *gameServiceImpl) GetGameFromRedis(id string) (dto.Game, error) {
 	game := &dto.Game{
 		ID: id,
 	}
@@ -126,32 +126,32 @@ func (g *gameServiceImpl) GetGameFromRedis(id string) (error, dto.Game) {
 	// Check if the game exists in Redis
 	err := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, game.ID).Err()
 	if err != nil {
-		return fmt.Errorf("Game not found: %v", err), dto.Game{}
+		return dto.Game{}, fmt.Errorf("game not found: %v", err)
 	}
 
 	// Retrieve the game data from Redis
 	val, err := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, game.ID).Bytes()
 	if err != nil {
-		return fmt.Errorf("Failed to retrieve game: %v", err), dto.Game{}
+		return dto.Game{}, fmt.Errorf("gailed to retrieve game: %v", err)
 	}
 
 	if err = json.Unmarshal(val, game); err != nil {
-		return fmt.Errorf("Failed to parse game data: %v", err), dto.Game{}
+		return dto.Game{}, fmt.Errorf("failed to parse game data: %v", err)
 	}
 
-	return nil, *game
+	return *game, nil
 }
 
 func (g *gameServiceImpl) SetGameToRedis(game dto.Game) error {
 	gameJSON, err := json.Marshal(game)
 	if err != nil {
-		return fmt.Errorf("Failed to process game data: %v", err)
+		return fmt.Errorf("failed to process game data: %v", err)
 	}
 
 	// Set the game in Redis with a 1-hour expiration time
 	err = config.AppConfig.RedisClient.Set(config.AppConfig.Ctx, game.ID, gameJSON, 0).Err()
 	if err != nil {
-		return fmt.Errorf("Error setting game in Redis: %v", err)
+		return fmt.Errorf("error setting game in Redis: %v", err)
 	}
 
 	return nil

@@ -37,7 +37,7 @@ func (u *gameControllerImpl) GetGame(ctx *gin.Context) {
 		return
 	}
 
-	err, game := u.gameService.GetGameFromRedis(id)
+	game, err := u.gameService.GetGameFromRedis(id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, err)
 		return
@@ -75,13 +75,13 @@ func (u *gameControllerImpl) StartGame(ctx *gin.Context) {
 	}
 
 	// Check if the game exists in Redis
-	val, err := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, game.ID).Bytes()
+	val, _ := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, game.ID).Bytes()
 	if val != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Game already exists"})
 		return
 	}
 
-	err = u.gameService.SetGameToRedis(*game)
+	err := u.gameService.SetGameToRedis(*game)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, err)
 		return
