@@ -87,7 +87,6 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 						houseGrid[pos] = digitToHash[0] // Set to ship (represented by 0)
 						publicGrid[pos] = 0
 					}
-					println("Placed ship at", startPos, "size", size, "orientation", orientation)
 					placed = true
 				}
 			} else { // Vertical
@@ -112,7 +111,6 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 						houseGrid[pos] = digitToHash[0] // Set to ship (represented by 0)
 						publicGrid[pos] = 0
 					}
-					println("Placed ship at", startPos, "size", size, "orientation", orientation)
 					placed = true
 				}
 			}

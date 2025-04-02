@@ -8,7 +8,7 @@ on:
 jobs:
   deploy-dev:
     runs-on: 'ubuntu-latest'
-    environment: 'Production'
+    environment: 'Preview'
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -23,31 +23,13 @@ jobs:
           credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
       - name: 'Save Secret to .env File'
-        run: echo "${{ secrets.ENV_DEV }}" > .env
-
-      - name: 'Create .gcloudignore file'
-        run: |
-          cat > .gcloudignore << 'EOF'
-          .git
-          .gitignore
-          .idea/
-          .vscode/
-          *.swp
-          *.swo
-          bin/
-          build/
-          .cache/
-          tmp/
-          *_test.go
-          *.test
-          *.md
-          docs/
-          *.log
-          !.env
-          !.env.dev
-          !.env.prod
-          !.env.staging
-          EOF
+        env:
+          PROJECT_ID: ${{ secrets.PROJECT_ID }}
+          ENV: 'dev'
+          SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT }}
+        run: |-
+          gcloud secrets versions access latest --secret="battledak-dev" \
+           --impersonate-service-account=${SERVICE_ACCOUNT} > .env
 
       - name: 'Trigger Cloud Build'
         env:
