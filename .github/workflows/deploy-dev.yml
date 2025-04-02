@@ -28,8 +28,7 @@ jobs:
           ENV: 'dev'
           SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT }}
         run: |-
-          gcloud secrets versions access latest --secret="battledak-dev" \
-           --impersonate-service-account=${SERVICE_ACCOUNT} > .env
+          gcloud secrets versions access latest --secret="battledak-dev" > .env
 
       - name: 'Trigger Cloud Build'
         env:
