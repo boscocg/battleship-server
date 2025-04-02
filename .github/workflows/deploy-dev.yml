@@ -25,7 +25,6 @@ jobs:
       - name: 'Save Secret to .env File'
         run: echo "${{ secrets.ENV_DEV }}" > secret
 
-
       - name: 'Trigger Cloud Build'
         env:
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
