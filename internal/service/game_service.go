@@ -71,12 +71,44 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 				col := rand.Intn(10 - size + 1)
 				startPos = row*10 + col
 
-				// Check if positions are already occupied
+				// Check if positions are already occupied or adjacent to other ships
 				canPlace := true
+				// Check the ship positions and their surroundings
 				for j := range size {
 					pos := startPos + j
+					
+					// Check the ship position itself
 					if publicGrid[pos] == 0 {
 						canPlace = false
+						break
+					}
+					
+					// Check surrounding positions (up, down, left, right, and diagonals)
+					row := pos / 10
+					col := pos % 10
+					
+					// Define surrounding positions to check
+					surroundingOffsets := []int{
+						-11, -10, -9, // Top-left, top, top-right
+						-1,      1,  // Left, right
+						 9,  10, 11,  // Bottom-left, bottom, bottom-right
+					}
+					
+					for _, offset := range surroundingOffsets {
+						adjPos := pos + offset
+						adjRow := adjPos / 10
+						adjCol := adjPos % 10
+						
+						// Make sure we don't go out of bounds and check if adjacent cell is a ship
+						if adjPos >= 0 && adjPos < 100 && // Within grid bounds
+						   abs(adjRow - row) <= 1 && abs(adjCol - col) <= 1 && // Adjacent cell (including diagonals)
+						   publicGrid[adjPos] == 0 { // It's a ship
+							canPlace = false
+							break
+						}
+					}
+					
+					if !canPlace {
 						break
 					}
 				}
@@ -95,12 +127,44 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 				col := rand.Intn(10)
 				startPos = row*10 + col
 
-				// Check if positions are already occupied
+				// Check if positions are already occupied or adjacent to other ships
 				canPlace := true
+				// Check the ship positions and their surroundings
 				for j := range size {
 					pos := startPos + j*10
+					
+					// Check the ship position itself
 					if publicGrid[pos] == 0 {
 						canPlace = false
+						break
+					}
+					
+					// Check surrounding positions (up, down, left, right, and diagonals)
+					row := pos / 10
+					col := pos % 10
+					
+					// Define surrounding positions to check
+					surroundingOffsets := []int{
+						-11, -10, -9, // Top-left, top, top-right
+						-1,      1,  // Left, right
+						 9,  10, 11,  // Bottom-left, bottom, bottom-right
+					}
+					
+					for _, offset := range surroundingOffsets {
+						adjPos := pos + offset
+						adjRow := adjPos / 10
+						adjCol := adjPos % 10
+						
+						// Make sure we don't go out of bounds and check if adjacent cell is a ship
+						if adjPos >= 0 && adjPos < 100 && // Within grid bounds
+						   abs(adjRow - row) <= 1 && abs(adjCol - col) <= 1 && // Adjacent cell (including diagonals)
+						   publicGrid[adjPos] == 0 { // It's a ship
+							canPlace = false
+							break
+						}
+					}
+					
+					if !canPlace {
 						break
 					}
 				}
@@ -116,6 +180,14 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 			}
 		}
 	}
+}
+
+// Helper function to get absolute value
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
 
 func (g *gameServiceImpl) GetGameFromRedis(id string) (dto.Game, error) {
