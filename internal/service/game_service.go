@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"time"
 
 	config "battledak-server/configs"
 )
@@ -14,6 +15,7 @@ type GameService interface {
 	GetGameFromRedis(id string) (dto.Game, error)
 	SetGameToRedis(game dto.Game) error
 	MapperGameToPublicGame(game dto.Game) dto.PublicGame
+	CheckIfIsInTheTimeLimit(game dto.Game) bool
 }
 
 type gameServiceImpl struct {
@@ -220,8 +222,8 @@ func (g *gameServiceImpl) SetGameToRedis(game dto.Game) error {
 		return fmt.Errorf("failed to process game data: %v", err)
 	}
 
-	// Set the game in Redis with a 1-hour expiration time
-	err = config.AppConfig.RedisClient.Set(config.AppConfig.Ctx, game.ID, gameJSON, 0).Err()
+	timeLimit := config.GetTimeLimit()
+	err = config.AppConfig.RedisClient.Set(config.AppConfig.Ctx, game.ID, gameJSON, timeLimit).Err()
 	if err != nil {
 		return fmt.Errorf("error setting game in Redis: %v", err)
 	}
@@ -242,4 +244,9 @@ func (g *gameServiceImpl) MapperGameToPublicGame(game dto.Game) dto.PublicGame {
 	}
 
 	return *publicGame
+}
+
+func (g *gameServiceImpl) CheckIfIsInTheTimeLimit(game dto.Game) bool {
+	timeLimit := config.GetTimeLimit()
+	return time.Since(game.CreatedAt) <= timeLimit
 }

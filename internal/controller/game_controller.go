@@ -39,7 +39,12 @@ func (u *gameControllerImpl) GetGame(ctx *gin.Context) {
 
 	game, err := u.gameService.GetGameFromRedis(id)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, err)
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Game is expired"})
+		return
+	}
+
+	if !u.gameService.CheckIfIsInTheTimeLimit(game) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Game is expired"})
 		return
 	}
 

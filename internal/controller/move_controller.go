@@ -41,7 +41,12 @@ func (m *moveControllerImpl) Move(ctx *gin.Context) {
 
 	game, err := m.gameService.GetGameFromRedis(input.ID)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, err)
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Game is expired"})
+		return
+	}
+
+	if !m.gameService.CheckIfIsInTheTimeLimit(game) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Game is expired"})
 		return
 	}
 
