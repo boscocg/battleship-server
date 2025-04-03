@@ -86,25 +86,19 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 						break
 					}
 
-					// Check surrounding positions (up, down, left, right, and diagonals)
-					row := pos / gridSize
-					col := pos % gridSize
-
-					// Define surrounding positions to check
+					// Define surrounding positions to check (apenas horizontais e verticais, não diagonais)
 					surroundingOffsets := []int{
-						-gridSize - 1, -gridSize, -gridSize + 1, // Top-left, top, top-right
-						-1, 1, // Left, right
-						gridSize - 1, gridSize, gridSize + 1, // Bottom-left, bottom, bottom-right
+						-gridSize, // top
+						-1, 1,     // left, right
+						gridSize, // bottom
 					}
 
 					for _, offset := range surroundingOffsets {
 						adjPos := pos + offset
-						adjRow := adjPos / gridSize
-						adjCol := adjPos % gridSize
 
 						// Make sure we don't go out of bounds and check if adjacent cell is a ship
+						// Verifica apenas ortogonalmente (sem diagonal): cada offset já está verificando apenas um lado
 						if adjPos >= 0 && adjPos < gridSize*gridSize && // Within grid bounds
-							abs(adjRow-row) <= 1 && abs(adjCol-col) <= 1 && // Adjacent cell (including diagonals)
 							publicGrid[adjPos] == 0 { // It's a ship
 							canPlace = false
 							break
@@ -142,25 +136,19 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 						break
 					}
 
-					// Check surrounding positions (up, down, left, right, and diagonals)
-					row := pos / gridSize
-					col := pos % gridSize
-
-					// Define surrounding positions to check
+					// Define surrounding positions to check (apenas horizontais e verticais, não diagonais)
 					surroundingOffsets := []int{
-						-gridSize - 1, -gridSize, -gridSize + 1, // Top-left, top, top-right
-						-1, 1, // Left, right
-						gridSize - 1, gridSize, gridSize + 1, // Bottom-left, bottom, bottom-right
+						-gridSize, // top
+						-1, 1,     // left, right
+						gridSize, // bottom
 					}
 
 					for _, offset := range surroundingOffsets {
 						adjPos := pos + offset
-						adjRow := adjPos / gridSize
-						adjCol := adjPos % gridSize
 
 						// Make sure we don't go out of bounds and check if adjacent cell is a ship
+						// Verifica apenas ortogonalmente (sem diagonal): cada offset já está verificando apenas um lado
 						if adjPos >= 0 && adjPos < gridSize*gridSize && // Within grid bounds
-							abs(adjRow-row) <= 1 && abs(adjCol-col) <= 1 && // Adjacent cell (including diagonals)
 							publicGrid[adjPos] == 0 { // It's a ship
 							canPlace = false
 							break
@@ -183,14 +171,6 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 			}
 		}
 	}
-}
-
-// Helper function to get absolute value
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
 }
 
 func (g *gameServiceImpl) GetGameFromRedis(id string) (dto.Game, error) {
