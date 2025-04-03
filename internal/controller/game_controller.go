@@ -3,6 +3,7 @@ package controller
 import (
 	"battledak-server/internal/dto"
 	"battledak-server/internal/service"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -60,10 +61,12 @@ func (u *gameControllerImpl) StartGame(ctx *gin.Context) {
 		return
 	}
 
-	houseGrid, decryptedHouseGrid := u.gameService.GenerateHouseGrid()
+	gridSize := config.GetGridSize()
+	totalCells := config.GetTotalCells()
+	houseGrid, decryptedHouseGrid := u.gameService.GenerateHouseGrid(gridSize)
 
-	if len(input.UserGrid) != 100 || len(houseGrid) != 100 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "User grid must be 100 cells"})
+	if len(input.UserGrid) != totalCells || len(houseGrid) != totalCells {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("User grid must be %d cells", totalCells)})
 		return
 	}
 

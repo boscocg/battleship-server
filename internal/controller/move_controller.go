@@ -1,6 +1,7 @@
 package controller
 
 import (
+	config "battledak-server/configs"
 	"battledak-server/internal/dto"
 	"battledak-server/internal/service"
 	"fmt"
@@ -62,18 +63,19 @@ func (m *moveControllerImpl) Move(ctx *gin.Context) {
 
 	cell := -1
 	isHit := false
+	defaultHits := config.GetTotalHits()
 
 	if input.Player == "USER" {
 		game, cell, isHit, err = userMove(input, game)
 		hits := m.moveService.CountHits(game.HouseGrid)
-		if hits == 20 {
+		if hits == defaultHits {
 			game.Winner = "USER"
 			game.FinishedAt = time.Now()
 		}
 	} else if input.Player == "HOUSE" {
 		game, cell, isHit, err = houseMove(m, game)
 		hits := m.moveService.CountHits(game.UserGrid)
-		if hits == 20 {
+		if hits == defaultHits {
 			game.Winner = "HOUSE"
 			game.FinishedAt = time.Now()
 		}
@@ -102,8 +104,10 @@ func (m *moveControllerImpl) Move(ctx *gin.Context) {
 }
 
 func userMove(input dto.MoveRequest, game dto.Game) (dto.Game, int, bool, error) {
+	gridSize := config.GetGridSize()
+
 	// Validate the input cell
-	if input.Player == "USER" && !validateInputCell(input.Cell) {
+	if input.Player == "USER" && !validateInputCell(input.Cell, gridSize) {
 		return game, -1, false, fmt.Errorf("invalid cell")
 	}
 
@@ -160,8 +164,9 @@ func houseMove(m *moveControllerImpl, game dto.Game) (dto.Game, int, bool, error
 	return game, cell, isHit, err
 }
 
-func validateInputCell(cell int) bool {
-	if cell < 0 || cell >= 100 {
+func validateInputCell(cell int, gridSize int) bool {
+	totalCells := gridSize * gridSize
+	if cell < 0 || cell >= totalCells {
 		return false
 	}
 	return true

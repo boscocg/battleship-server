@@ -11,7 +11,7 @@ import (
 )
 
 type GameService interface {
-	GenerateHouseGrid() ([]dto.CellType, []int)
+	GenerateHouseGrid(gridSize int) ([]dto.CellType, []int)
 	GetGameFromRedis(id string) (dto.Game, error)
 	SetGameToRedis(game dto.Game) error
 	MapperGameToPublicGame(game dto.Game) dto.PublicGame
@@ -25,7 +25,7 @@ func NewGameService() *gameServiceImpl {
 	return &gameServiceImpl{}
 }
 
-func (g *gameServiceImpl) GenerateHouseGrid() ([]dto.CellType, []int) {
+func (g *gameServiceImpl) GenerateHouseGrid(gridSize int) ([]dto.CellType, []int) {
 	// Seed the random number generator
 	digitToHash := map[int]dto.CellType{
 		0: "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
@@ -40,8 +40,9 @@ func (g *gameServiceImpl) GenerateHouseGrid() ([]dto.CellType, []int) {
 		9: "21049d1e9d599bf59ef8364908a6938e6ad9c587c2c2c3065b4ac29c558659ca",
 	}
 
-	houseGrid := make([]dto.CellType, 100)
-	publicGrid := make([]int, 100)
+	totalCells := gridSize * gridSize
+	houseGrid := make([]dto.CellType, totalCells)
+	publicGrid := make([]int, totalCells)
 
 	// Initialize all cells to empty (water)
 	for i := range houseGrid {
@@ -51,15 +52,15 @@ func (g *gameServiceImpl) GenerateHouseGrid() ([]dto.CellType, []int) {
 	}
 
 	// Place ships
-	placeShips(houseGrid, publicGrid, 4, 1, digitToHash)
-	placeShips(houseGrid, publicGrid, 3, 2, digitToHash)
-	placeShips(houseGrid, publicGrid, 2, 3, digitToHash)
-	placeShips(houseGrid, publicGrid, 1, 4, digitToHash)
+	placeShips(houseGrid, publicGrid, 4, 1, digitToHash, gridSize)
+	placeShips(houseGrid, publicGrid, 3, 2, digitToHash, gridSize)
+	placeShips(houseGrid, publicGrid, 2, 3, digitToHash, gridSize)
+	placeShips(houseGrid, publicGrid, 1, 4, digitToHash, gridSize)
 
 	return houseGrid, publicGrid
 }
 
-func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, digitToHash map[int]dto.CellType) {
+func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, digitToHash map[int]dto.CellType, gridSize int) {
 	for range count {
 		placed := false
 		for !placed {
@@ -69,9 +70,9 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 
 			if orientation == 0 { // Horizontal
 				// Ensure the ship doesn't go off the right edge
-				row := rand.Intn(10)
-				col := rand.Intn(10 - size + 1)
-				startPos = row*10 + col
+				row := rand.Intn(gridSize)
+				col := rand.Intn(gridSize - size + 1)
+				startPos = row*gridSize + col
 
 				// Check if positions are already occupied or adjacent to other ships
 				canPlace := true
@@ -86,23 +87,23 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 					}
 
 					// Check surrounding positions (up, down, left, right, and diagonals)
-					row := pos / 10
-					col := pos % 10
+					row := pos / gridSize
+					col := pos % gridSize
 
 					// Define surrounding positions to check
 					surroundingOffsets := []int{
-						-11, -10, -9, // Top-left, top, top-right
+						-gridSize - 1, -gridSize, -gridSize + 1, // Top-left, top, top-right
 						-1, 1, // Left, right
-						9, 10, 11, // Bottom-left, bottom, bottom-right
+						gridSize - 1, gridSize, gridSize + 1, // Bottom-left, bottom, bottom-right
 					}
 
 					for _, offset := range surroundingOffsets {
 						adjPos := pos + offset
-						adjRow := adjPos / 10
-						adjCol := adjPos % 10
+						adjRow := adjPos / gridSize
+						adjCol := adjPos % gridSize
 
 						// Make sure we don't go out of bounds and check if adjacent cell is a ship
-						if adjPos >= 0 && adjPos < 100 && // Within grid bounds
+						if adjPos >= 0 && adjPos < gridSize*gridSize && // Within grid bounds
 							abs(adjRow-row) <= 1 && abs(adjCol-col) <= 1 && // Adjacent cell (including diagonals)
 							publicGrid[adjPos] == 0 { // It's a ship
 							canPlace = false
@@ -125,15 +126,15 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 				}
 			} else { // Vertical
 				// Ensure the ship doesn't go off the bottom edge
-				row := rand.Intn(10 - size + 1)
-				col := rand.Intn(10)
-				startPos = row*10 + col
+				row := rand.Intn(gridSize - size + 1)
+				col := rand.Intn(gridSize)
+				startPos = row*gridSize + col
 
 				// Check if positions are already occupied or adjacent to other ships
 				canPlace := true
 				// Check the ship positions and their surroundings
 				for j := range size {
-					pos := startPos + j*10
+					pos := startPos + j*gridSize
 
 					// Check the ship position itself
 					if publicGrid[pos] == 0 {
@@ -142,23 +143,23 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 					}
 
 					// Check surrounding positions (up, down, left, right, and diagonals)
-					row := pos / 10
-					col := pos % 10
+					row := pos / gridSize
+					col := pos % gridSize
 
 					// Define surrounding positions to check
 					surroundingOffsets := []int{
-						-11, -10, -9, // Top-left, top, top-right
+						-gridSize - 1, -gridSize, -gridSize + 1, // Top-left, top, top-right
 						-1, 1, // Left, right
-						9, 10, 11, // Bottom-left, bottom, bottom-right
+						gridSize - 1, gridSize, gridSize + 1, // Bottom-left, bottom, bottom-right
 					}
 
 					for _, offset := range surroundingOffsets {
 						adjPos := pos + offset
-						adjRow := adjPos / 10
-						adjCol := adjPos % 10
+						adjRow := adjPos / gridSize
+						adjCol := adjPos % gridSize
 
 						// Make sure we don't go out of bounds and check if adjacent cell is a ship
-						if adjPos >= 0 && adjPos < 100 && // Within grid bounds
+						if adjPos >= 0 && adjPos < gridSize*gridSize && // Within grid bounds
 							abs(adjRow-row) <= 1 && abs(adjCol-col) <= 1 && // Adjacent cell (including diagonals)
 							publicGrid[adjPos] == 0 { // It's a ship
 							canPlace = false
@@ -173,7 +174,7 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 
 				if canPlace {
 					for j := range size {
-						pos := startPos + j*10
+						pos := startPos + j*gridSize
 						houseGrid[pos] = digitToHash[0] // Set to ship (represented by 0)
 						publicGrid[pos] = 0
 					}
