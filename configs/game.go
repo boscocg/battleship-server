@@ -36,6 +36,7 @@ func GetTotalCells() int {
 	return gridSize * gridSize
 }
 
+// GetTotalHits returns the total number of cells occupied by ships
 func GetTotalHits() int {
 	return 20
 }

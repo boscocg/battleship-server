@@ -4,6 +4,8 @@ import (
 	"battledak-server/internal/dto"
 	"fmt"
 	"math/rand"
+
+	config "battledak-server/configs"
 )
 
 type MoveService interface {
@@ -19,6 +21,7 @@ func NewMoveService() *moveServiceImpl {
 }
 
 func (g *moveServiceImpl) GenerateHouseMove(userGrid []dto.CellType) (error, int) {
+	gridSize := config.GetGridSize()
 	hits := make([]int, 0)
 	availableCells := make([]int, 0)
 	for i, cell := range userGrid {
@@ -32,21 +35,25 @@ func (g *moveServiceImpl) GenerateHouseMove(userGrid []dto.CellType) (error, int
 
 	if len(hits) > 0 {
 		for _, hit := range hits {
+			// Get row and column from hit index
+			row := hit / gridSize
+			col := hit % gridSize
+
 			// Check left
-			if hit%10 > 0 && userGrid[hit-1] != dto.Hit && userGrid[hit-1] != dto.Miss {
+			if col > 0 && userGrid[hit-1] != dto.Hit && userGrid[hit-1] != dto.Miss {
 				return nil, hit - 1
 			}
 			// Check right
-			if hit%10 < 9 && userGrid[hit+1] != dto.Hit && userGrid[hit+1] != dto.Miss {
+			if col < gridSize-1 && userGrid[hit+1] != dto.Hit && userGrid[hit+1] != dto.Miss {
 				return nil, hit + 1
 			}
 			// Check up
-			if hit-10 >= 0 && userGrid[hit-10] != dto.Hit && userGrid[hit-10] != dto.Miss {
-				return nil, hit - 10
+			if row > 0 && userGrid[hit-gridSize] != dto.Hit && userGrid[hit-gridSize] != dto.Miss {
+				return nil, hit - gridSize
 			}
 			// Check down
-			if hit+10 < len(userGrid) && userGrid[hit+10] != dto.Hit && userGrid[hit+10] != dto.Miss {
-				return nil, hit + 10
+			if row < gridSize-1 && userGrid[hit+gridSize] != dto.Hit && userGrid[hit+gridSize] != dto.Miss {
+				return nil, hit + gridSize
 			}
 		}
 	}
@@ -56,7 +63,7 @@ func (g *moveServiceImpl) GenerateHouseMove(userGrid []dto.CellType) (error, int
 		return nil, availableCells[randomIndex]
 	}
 
-	return fmt.Errorf("No more moves available"), -1
+	return fmt.Errorf("no more moves available"), -1
 }
 
 func (g *moveServiceImpl) CountHits(grid []dto.CellType) int {
