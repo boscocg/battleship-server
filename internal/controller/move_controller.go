@@ -63,12 +63,14 @@ func (m *moveControllerImpl) Move(ctx *gin.Context) {
 		hits := m.moveService.CountHits(game.HouseGrid)
 		if hits == 20 {
 			game.Winner = "USER"
+			game.FinishedAt = time.Now()
 		}
 	} else if input.Player == "HOUSE" {
 		game, cell, isHit, err = houseMove(m, game)
 		hits := m.moveService.CountHits(game.UserGrid)
 		if hits == 20 {
 			game.Winner = "HOUSE"
+			game.FinishedAt = time.Now()
 		}
 	}
 

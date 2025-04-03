@@ -76,38 +76,38 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 				// Check the ship positions and their surroundings
 				for j := range size {
 					pos := startPos + j
-					
+
 					// Check the ship position itself
 					if publicGrid[pos] == 0 {
 						canPlace = false
 						break
 					}
-					
+
 					// Check surrounding positions (up, down, left, right, and diagonals)
 					row := pos / 10
 					col := pos % 10
-					
+
 					// Define surrounding positions to check
 					surroundingOffsets := []int{
 						-11, -10, -9, // Top-left, top, top-right
-						-1,      1,  // Left, right
-						 9,  10, 11,  // Bottom-left, bottom, bottom-right
+						-1, 1, // Left, right
+						9, 10, 11, // Bottom-left, bottom, bottom-right
 					}
-					
+
 					for _, offset := range surroundingOffsets {
 						adjPos := pos + offset
 						adjRow := adjPos / 10
 						adjCol := adjPos % 10
-						
+
 						// Make sure we don't go out of bounds and check if adjacent cell is a ship
 						if adjPos >= 0 && adjPos < 100 && // Within grid bounds
-						   abs(adjRow - row) <= 1 && abs(adjCol - col) <= 1 && // Adjacent cell (including diagonals)
-						   publicGrid[adjPos] == 0 { // It's a ship
+							abs(adjRow-row) <= 1 && abs(adjCol-col) <= 1 && // Adjacent cell (including diagonals)
+							publicGrid[adjPos] == 0 { // It's a ship
 							canPlace = false
 							break
 						}
 					}
-					
+
 					if !canPlace {
 						break
 					}
@@ -132,38 +132,38 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 				// Check the ship positions and their surroundings
 				for j := range size {
 					pos := startPos + j*10
-					
+
 					// Check the ship position itself
 					if publicGrid[pos] == 0 {
 						canPlace = false
 						break
 					}
-					
+
 					// Check surrounding positions (up, down, left, right, and diagonals)
 					row := pos / 10
 					col := pos % 10
-					
+
 					// Define surrounding positions to check
 					surroundingOffsets := []int{
 						-11, -10, -9, // Top-left, top, top-right
-						-1,      1,  // Left, right
-						 9,  10, 11,  // Bottom-left, bottom, bottom-right
+						-1, 1, // Left, right
+						9, 10, 11, // Bottom-left, bottom, bottom-right
 					}
-					
+
 					for _, offset := range surroundingOffsets {
 						adjPos := pos + offset
 						adjRow := adjPos / 10
 						adjCol := adjPos % 10
-						
+
 						// Make sure we don't go out of bounds and check if adjacent cell is a ship
 						if adjPos >= 0 && adjPos < 100 && // Within grid bounds
-						   abs(adjRow - row) <= 1 && abs(adjCol - col) <= 1 && // Adjacent cell (including diagonals)
-						   publicGrid[adjPos] == 0 { // It's a ship
+							abs(adjRow-row) <= 1 && abs(adjCol-col) <= 1 && // Adjacent cell (including diagonals)
+							publicGrid[adjPos] == 0 { // It's a ship
 							canPlace = false
 							break
 						}
 					}
-					
+
 					if !canPlace {
 						break
 					}
@@ -231,12 +231,14 @@ func (g *gameServiceImpl) SetGameToRedis(game dto.Game) error {
 
 func (g *gameServiceImpl) MapperGameToPublicGame(game dto.Game) dto.PublicGame {
 	publicGame := &dto.PublicGame{
-		ID:        game.ID,
-		LastMove:  game.LastMove,
-		UserGrid:  game.UserGrid,
-		HouseGrid: game.HouseGrid,
-		UpdatedAt: game.UpdatedAt,
-		Winner:    game.Winner,
+		ID:         game.ID,
+		LastMove:   game.LastMove,
+		UserGrid:   game.UserGrid,
+		HouseGrid:  game.HouseGrid,
+		UpdatedAt:  game.UpdatedAt,
+		CreatedAt:  game.CreatedAt,
+		FinishedAt: game.FinishedAt,
+		Winner:     game.Winner,
 	}
 
 	return *publicGame

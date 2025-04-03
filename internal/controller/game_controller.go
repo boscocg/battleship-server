@@ -71,6 +71,7 @@ func (u *gameControllerImpl) StartGame(ctx *gin.Context) {
 		UserGrid:           input.UserGrid,
 		HouseGrid:          houseGrid,
 		UpdatedAt:          time.Now(),
+		CreatedAt:          time.Now(),
 		DecryptedHouseGrid: decryptedHouseGrid,
 	}
 
