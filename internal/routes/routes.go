@@ -40,7 +40,7 @@ func SetupRouter() *gin.Engine {
 			if config.GetEnv("ENV") == "dev" || config.GetEnv("ENV") == "local" {
 				return true
 			}
-			if strings.HasSuffix(origin, "-gateway-dao.vercel.app") || strings.HasSuffix(origin, ".gateway.tech") {
+			if strings.HasSuffix(origin, "-project.vercel.app") || strings.HasSuffix(origin, ".project.tech") {
 				return true
 			}
 			allowedOrigins := []string{config.GetEnv("LOCAL_FRONT"), config.GetEnv("API_HOST_FULL")}

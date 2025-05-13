@@ -61,12 +61,12 @@ gcloud-build-prod: env-prod
 # Deploy dev
 deploy-dev: gcloud-build-dev
 	gcloud config set run/region us-east1
-	gcloud run deploy battledak-server-dev --image gcr.io/gateway-dashboard-front/battledak-server-dev --platform managed --allow-unauthenticated
+	gcloud run deploy battledak-server-dev --image gcr.io/project/battledak-server-dev --platform managed --allow-unauthenticated
 
 # Deploy prod
 deploy-prod: gcloud-build-prod
 	gcloud config set run/region us-east1
-	gcloud run deploy battledak-server-prod --image gcr.io/gateway-dashboard-front/battledak-server-prod --platform managed --allow-unauthenticated
+	gcloud run deploy battledak-server-prod --image gcr.io/project/battledak-server-prod --platform managed --allow-unauthenticated
 
 ## ENV MANAGE
 env-local:

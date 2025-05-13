@@ -10,11 +10,11 @@ steps:
         '--build-arg',
         'ENV=$_ENV',
         '-t',
-        'gcr.io/gateway-dashboard-front/battledak-server-$_ENV',
+        'gcr.io/project/battledak-server-$_ENV',
         '.',
       ]
 images:
-  - 'gcr.io/gateway-dashboard-front/battledak-server-$_ENV'
+  - 'gcr.io/project/battledak-server-$_ENV'
 substitutions:
   _ENV_FILE: '.env'
   _ENV: 'prod'
