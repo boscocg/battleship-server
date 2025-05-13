@@ -1,4 +1,4 @@
-# Battledak Server
+# Battleship Server
 
 A Go-based backend server application with Redis integration, containerized with Docker and deployed to Google Cloud Run.
 
