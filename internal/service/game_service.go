@@ -5,15 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"time"
 
 	config "battledak-server/configs"
 )
 
 type GameService interface {
-	GenerateHouseGrid() ([]dto.CellType, []int)
-	GetGameFromRedis(id string) (error, dto.Game)
+	GenerateHouseGrid(gridSize int) ([]dto.CellType, []int)
+	GetGameFromRedis(id string) (dto.Game, error)
 	SetGameToRedis(game dto.Game) error
 	MapperGameToPublicGame(game dto.Game) dto.PublicGame
+	CheckIfIsInTheTimeLimit(game dto.Game) bool
 }
 
 type gameServiceImpl struct {
@@ -23,7 +25,7 @@ func NewGameService() *gameServiceImpl {
 	return &gameServiceImpl{}
 }
 
-func (g *gameServiceImpl) GenerateHouseGrid() ([]dto.CellType, []int) {
+func (g *gameServiceImpl) GenerateHouseGrid(gridSize int) ([]dto.CellType, []int) {
 	// Seed the random number generator
 	digitToHash := map[int]dto.CellType{
 		0: "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
@@ -38,8 +40,9 @@ func (g *gameServiceImpl) GenerateHouseGrid() ([]dto.CellType, []int) {
 		9: "21049d1e9d599bf59ef8364908a6938e6ad9c587c2c2c3065b4ac29c558659ca",
 	}
 
-	houseGrid := make([]dto.CellType, 100)
-	publicGrid := make([]int, 100)
+	totalCells := gridSize * gridSize
+	houseGrid := make([]dto.CellType, totalCells)
+	publicGrid := make([]int, totalCells)
 
 	// Initialize all cells to empty (water)
 	for i := range houseGrid {
@@ -49,15 +52,15 @@ func (g *gameServiceImpl) GenerateHouseGrid() ([]dto.CellType, []int) {
 	}
 
 	// Place ships
-	placeShips(houseGrid, publicGrid, 4, 1, digitToHash)
-	placeShips(houseGrid, publicGrid, 3, 2, digitToHash)
-	placeShips(houseGrid, publicGrid, 2, 3, digitToHash)
-	placeShips(houseGrid, publicGrid, 1, 4, digitToHash)
+	placeShips(houseGrid, publicGrid, 4, 1, digitToHash, gridSize)
+	placeShips(houseGrid, publicGrid, 3, 2, digitToHash, gridSize)
+	placeShips(houseGrid, publicGrid, 2, 3, digitToHash, gridSize)
+	placeShips(houseGrid, publicGrid, 1, 4, digitToHash, gridSize)
 
 	return houseGrid, publicGrid
 }
 
-func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, digitToHash map[int]dto.CellType) {
+func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, digitToHash map[int]dto.CellType, gridSize int) {
 	for range count {
 		placed := false
 		for !placed {
@@ -67,16 +70,42 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 
 			if orientation == 0 { // Horizontal
 				// Ensure the ship doesn't go off the right edge
-				row := rand.Intn(10)
-				col := rand.Intn(10 - size + 1)
-				startPos = row*10 + col
+				row := rand.Intn(gridSize)
+				col := rand.Intn(gridSize - size + 1)
+				startPos = row*gridSize + col
 
-				// Check if positions are already occupied
+				// Check if positions are already occupied or adjacent to other ships
 				canPlace := true
+				// Check the ship positions and their surroundings
 				for j := range size {
 					pos := startPos + j
+
+					// Check the ship position itself
 					if publicGrid[pos] == 0 {
 						canPlace = false
+						break
+					}
+
+					// Define surrounding positions to check (apenas horizontais e verticais, não diagonais)
+					surroundingOffsets := []int{
+						-gridSize, // top
+						-1, 1,     // left, right
+						gridSize, // bottom
+					}
+
+					for _, offset := range surroundingOffsets {
+						adjPos := pos + offset
+
+						// Make sure we don't go out of bounds and check if adjacent cell is a ship
+						// Verifica apenas ortogonalmente (sem diagonal): cada offset já está verificando apenas um lado
+						if adjPos >= 0 && adjPos < gridSize*gridSize && // Within grid bounds
+							publicGrid[adjPos] == 0 { // It's a ship
+							canPlace = false
+							break
+						}
+					}
+
+					if !canPlace {
 						break
 					}
 				}
@@ -91,23 +120,49 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 				}
 			} else { // Vertical
 				// Ensure the ship doesn't go off the bottom edge
-				row := rand.Intn(10 - size + 1)
-				col := rand.Intn(10)
-				startPos = row*10 + col
+				row := rand.Intn(gridSize - size + 1)
+				col := rand.Intn(gridSize)
+				startPos = row*gridSize + col
 
-				// Check if positions are already occupied
+				// Check if positions are already occupied or adjacent to other ships
 				canPlace := true
+				// Check the ship positions and their surroundings
 				for j := range size {
-					pos := startPos + j*10
+					pos := startPos + j*gridSize
+
+					// Check the ship position itself
 					if publicGrid[pos] == 0 {
 						canPlace = false
+						break
+					}
+
+					// Define surrounding positions to check (apenas horizontais e verticais, não diagonais)
+					surroundingOffsets := []int{
+						-gridSize, // top
+						-1, 1,     // left, right
+						gridSize, // bottom
+					}
+
+					for _, offset := range surroundingOffsets {
+						adjPos := pos + offset
+
+						// Make sure we don't go out of bounds and check if adjacent cell is a ship
+						// Verifica apenas ortogonalmente (sem diagonal): cada offset já está verificando apenas um lado
+						if adjPos >= 0 && adjPos < gridSize*gridSize && // Within grid bounds
+							publicGrid[adjPos] == 0 { // It's a ship
+							canPlace = false
+							break
+						}
+					}
+
+					if !canPlace {
 						break
 					}
 				}
 
 				if canPlace {
 					for j := range size {
-						pos := startPos + j*10
+						pos := startPos + j*gridSize
 						houseGrid[pos] = digitToHash[0] // Set to ship (represented by 0)
 						publicGrid[pos] = 0
 					}
@@ -118,7 +173,7 @@ func placeShips(houseGrid []dto.CellType, publicGrid []int, count, size int, dig
 	}
 }
 
-func (g *gameServiceImpl) GetGameFromRedis(id string) (error, dto.Game) {
+func (g *gameServiceImpl) GetGameFromRedis(id string) (dto.Game, error) {
 	game := &dto.Game{
 		ID: id,
 	}
@@ -126,32 +181,32 @@ func (g *gameServiceImpl) GetGameFromRedis(id string) (error, dto.Game) {
 	// Check if the game exists in Redis
 	err := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, game.ID).Err()
 	if err != nil {
-		return fmt.Errorf("Game not found: %v", err), dto.Game{}
+		return dto.Game{}, fmt.Errorf("game not found: %v", err)
 	}
 
 	// Retrieve the game data from Redis
 	val, err := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, game.ID).Bytes()
 	if err != nil {
-		return fmt.Errorf("Failed to retrieve game: %v", err), dto.Game{}
+		return dto.Game{}, fmt.Errorf("gailed to retrieve game: %v", err)
 	}
 
 	if err = json.Unmarshal(val, game); err != nil {
-		return fmt.Errorf("Failed to parse game data: %v", err), dto.Game{}
+		return dto.Game{}, fmt.Errorf("failed to parse game data: %v", err)
 	}
 
-	return nil, *game
+	return *game, nil
 }
 
 func (g *gameServiceImpl) SetGameToRedis(game dto.Game) error {
 	gameJSON, err := json.Marshal(game)
 	if err != nil {
-		return fmt.Errorf("Failed to process game data: %v", err)
+		return fmt.Errorf("failed to process game data: %v", err)
 	}
 
-	// Set the game in Redis with a 1-hour expiration time
-	err = config.AppConfig.RedisClient.Set(config.AppConfig.Ctx, game.ID, gameJSON, 0).Err()
+	timeLimit := config.GetTimeLimit()
+	err = config.AppConfig.RedisClient.Set(config.AppConfig.Ctx, game.ID, gameJSON, timeLimit).Err()
 	if err != nil {
-		return fmt.Errorf("Error setting game in Redis: %v", err)
+		return fmt.Errorf("error setting game in Redis: %v", err)
 	}
 
 	return nil
@@ -159,13 +214,20 @@ func (g *gameServiceImpl) SetGameToRedis(game dto.Game) error {
 
 func (g *gameServiceImpl) MapperGameToPublicGame(game dto.Game) dto.PublicGame {
 	publicGame := &dto.PublicGame{
-		ID:        game.ID,
-		LastMove:  game.LastMove,
-		UserGrid:  game.UserGrid,
-		HouseGrid: game.HouseGrid,
-		UpdatedAt: game.UpdatedAt,
-		Winner:    game.Winner,
+		ID:         game.ID,
+		LastMove:   game.LastMove,
+		UserGrid:   game.UserGrid,
+		HouseGrid:  game.HouseGrid,
+		UpdatedAt:  game.UpdatedAt,
+		CreatedAt:  game.CreatedAt,
+		FinishedAt: game.FinishedAt,
+		Winner:     game.Winner,
 	}
 
 	return *publicGame
+}
+
+func (g *gameServiceImpl) CheckIfIsInTheTimeLimit(game dto.Game) bool {
+	timeLimit := config.GetTimeLimit()
+	return time.Since(game.CreatedAt) <= timeLimit
 }

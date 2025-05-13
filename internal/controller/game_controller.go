@@ -3,6 +3,7 @@ package controller
 import (
 	"battledak-server/internal/dto"
 	"battledak-server/internal/service"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -37,9 +38,14 @@ func (u *gameControllerImpl) GetGame(ctx *gin.Context) {
 		return
 	}
 
-	err, game := u.gameService.GetGameFromRedis(id)
+	game, err := u.gameService.GetGameFromRedis(id)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, err)
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Game is expired"})
+		return
+	}
+
+	if !u.gameService.CheckIfIsInTheTimeLimit(game) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Game is expired"})
 		return
 	}
 
@@ -55,10 +61,12 @@ func (u *gameControllerImpl) StartGame(ctx *gin.Context) {
 		return
 	}
 
-	houseGrid, decryptedHouseGrid := u.gameService.GenerateHouseGrid()
+	gridSize := config.GetGridSize()
+	totalCells := config.GetTotalCells()
+	houseGrid, decryptedHouseGrid := u.gameService.GenerateHouseGrid(gridSize)
 
-	if len(input.UserGrid) != 100 || len(houseGrid) != 100 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "User grid must be 100 cells"})
+	if len(input.UserGrid) != totalCells || len(houseGrid) != totalCells {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("User grid must be %d cells", totalCells)})
 		return
 	}
 
@@ -71,17 +79,18 @@ func (u *gameControllerImpl) StartGame(ctx *gin.Context) {
 		UserGrid:           input.UserGrid,
 		HouseGrid:          houseGrid,
 		UpdatedAt:          time.Now(),
+		CreatedAt:          time.Now(),
 		DecryptedHouseGrid: decryptedHouseGrid,
 	}
 
 	// Check if the game exists in Redis
-	val, err := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, game.ID).Bytes()
+	val, _ := config.AppConfig.RedisClient.Get(config.AppConfig.Ctx, game.ID).Bytes()
 	if val != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Game already exists"})
 		return
 	}
 
-	err = u.gameService.SetGameToRedis(*game)
+	err := u.gameService.SetGameToRedis(*game)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, err)
 		return

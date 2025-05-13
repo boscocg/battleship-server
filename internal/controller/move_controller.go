@@ -1,6 +1,7 @@
 package controller
 
 import (
+	config "battledak-server/configs"
 	"battledak-server/internal/dto"
 	"battledak-server/internal/service"
 	"fmt"
@@ -39,9 +40,14 @@ func (m *moveControllerImpl) Move(ctx *gin.Context) {
 		return
 	}
 
-	err, game := m.gameService.GetGameFromRedis(input.ID)
+	game, err := m.gameService.GetGameFromRedis(input.ID)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, err)
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Game is expired"})
+		return
+	}
+
+	if !m.gameService.CheckIfIsInTheTimeLimit(game) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Game is expired"})
 		return
 	}
 
@@ -57,18 +63,21 @@ func (m *moveControllerImpl) Move(ctx *gin.Context) {
 
 	cell := -1
 	isHit := false
+	defaultHits := config.GetTotalHits()
 
 	if input.Player == "USER" {
-		err, game, cell, isHit = userMove(input, game)
+		game, cell, isHit, err = userMove(input, game)
 		hits := m.moveService.CountHits(game.HouseGrid)
-		if hits == 20 {
+		if hits == defaultHits {
 			game.Winner = "USER"
+			game.FinishedAt = time.Now()
 		}
 	} else if input.Player == "HOUSE" {
-		err, game, cell, isHit = houseMove(m, game)
+		game, cell, isHit, err = houseMove(m, game)
 		hits := m.moveService.CountHits(game.UserGrid)
-		if hits == 20 {
+		if hits == defaultHits {
 			game.Winner = "HOUSE"
+			game.FinishedAt = time.Now()
 		}
 	}
 
@@ -94,15 +103,17 @@ func (m *moveControllerImpl) Move(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, move)
 }
 
-func userMove(input dto.MoveRequest, game dto.Game) (error, dto.Game, int, bool) {
+func userMove(input dto.MoveRequest, game dto.Game) (dto.Game, int, bool, error) {
+	gridSize := config.GetGridSize()
+
 	// Validate the input cell
-	if input.Player == "USER" && validateInputCell(input.Cell) == false {
-		return fmt.Errorf("Invalid cell"), game, -1, false
+	if input.Player == "USER" && !validateInputCell(input.Cell, gridSize) {
+		return game, -1, false, fmt.Errorf("invalid cell")
 	}
 
 	// Check if the cell is valid
 	if game.HouseGrid[input.Cell] == dto.Hit || game.HouseGrid[input.Cell] == dto.Miss {
-		return fmt.Errorf("This cell has already been chosen"), game, -1, false
+		return game, -1, false, fmt.Errorf("this cell has already been chosen")
 	}
 
 	// Check if the cell is a hit or miss
@@ -120,25 +131,25 @@ func userMove(input dto.MoveRequest, game dto.Game) (error, dto.Game, int, bool)
 		game.HouseGrid[input.Cell] = dto.Miss
 	}
 
-	return nil, game, input.Cell, isHit
+	return game, input.Cell, isHit, nil
 }
 
-func houseMove(m *moveControllerImpl, game dto.Game) (error, dto.Game, int, bool) {
+func houseMove(m *moveControllerImpl, game dto.Game) (dto.Game, int, bool, error) {
 	// Generate a cell for the house move
 	err, cell := m.moveService.GenerateHouseMove(game.UserGrid)
 	if err != nil {
-		return err, game, -1, false
+		return game, -1, false, err
 	}
 
 	// Check if the cell is valid
 	if game.UserGrid[cell] == dto.Hit || game.UserGrid[cell] == dto.Miss {
-		return fmt.Errorf("This cell has already been chosen"), game, -1, false
+		return game, -1, false, fmt.Errorf("this cell has already been chosen")
 	}
 
 	// Check if the cell is a hit or miss
 	err, isHit := m.cryptoService.IsZero(game.UserGrid[cell])
 	if err != nil {
-		return err, game, -1, false
+		return game, -1, false, err
 	}
 
 	// Update game state
@@ -150,11 +161,12 @@ func houseMove(m *moveControllerImpl, game dto.Game) (error, dto.Game, int, bool
 		game.UserGrid[cell] = dto.Miss
 	}
 
-	return err, game, cell, isHit
+	return game, cell, isHit, err
 }
 
-func validateInputCell(cell int) bool {
-	if cell < 0 || cell >= 100 {
+func validateInputCell(cell int, gridSize int) bool {
+	totalCells := gridSize * gridSize
+	if cell < 0 || cell >= totalCells {
 		return false
 	}
 	return true

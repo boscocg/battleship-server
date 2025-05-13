@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -56,30 +57,16 @@ func NewRedisClient(ctx context.Context) *redis.Client {
 	return rdb
 }
 
-func WriteToRedis(key string, value string) error {
-	client := AppConfig.RedisClient
-	if client == nil {
-		return fmt.Errorf("redisClient is not initialized")
+func GetTimeLimit() time.Duration {
+	exp := time.Hour // Default to 1 hour expiration
+	// Get expiration from environment variable (minutes)
+	if envTimeLimit := GetEnv("TIME_LIMIT"); envTimeLimit != "" {
+		parsedTimeLimit, err := time.ParseDuration(envTimeLimit)
+		if err != nil {
+			log.Printf("Invalid TIME_LIMIT format, using default: %v", err)
+			return time.Hour
+		}
+		exp = parsedTimeLimit
 	}
-
-	err := client.Set(AppConfig.Ctx, key, value, 0).Err()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func ReadFromRedis(key string) (string, error) {
-	client := AppConfig.RedisClient
-	if client == nil {
-		return "", fmt.Errorf("redisClient is not initialized")
-	}
-
-	val, err := client.Get(AppConfig.Ctx, key).Result()
-	if err == redis.Nil {
-		return "", nil
-	} else if err != nil {
-		return "", err
-	}
-	return val, nil
+	return exp
 }

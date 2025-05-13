@@ -5,7 +5,7 @@ networks:
 
 services:
   redis:
-    container_name: gateway-redis
+    container_name: battledak-redis
     image: redis
     restart: always
     ports:
